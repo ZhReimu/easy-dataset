@@ -35,4 +35,4 @@ RUN pnpm build
 EXPOSE 1717
 
 # 启动应用
-CMD ["pnpm", "start"]
+CMD ["pnpm", "start-docker"]
