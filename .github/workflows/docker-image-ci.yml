@@ -1,0 +1,41 @@
+name: Docker Image CI
+
+on:
+  push:
+    tags:
+      - 'v*'  # 仅匹配以v开头的标签，如v1.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Extract tag name
+        id: tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag_name=$TAG_NAME" >> $GITHUB_ENV
+      
+      - name: Build the Docker image
+        run: |
+          IMAGE_ID=${{ secrets.DOCKERHUB_USERNAME }}/easy-dataset
+          docker build . --file Dockerfile --tag $IMAGE_ID:${{ env.tag_name }}
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Tag and push both versions
+        run: |
+          IMAGE_ID=${{ secrets.DOCKERHUB_USERNAME }}/easy-dataset
+          
+          # 标记为latest版本
+          docker tag $IMAGE_ID:${{ env.tag_name }} $IMAGE_ID:latest
+          
+          # 推送两个版本
+          docker push $IMAGE_ID:${{ env.tag_name }}
+          docker push $IMAGE_ID:latest
