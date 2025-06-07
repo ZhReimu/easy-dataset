@@ -10,15 +10,15 @@ datasource db {
 
 model Projects {
   id                   String        @id @default(nanoid(12))
-  name                 String
-  description          String
-  globalPrompt         String        @default("")
-  questionPrompt       String        @default("")
-  answerPrompt         String        @default("")
-  labelPrompt          String        @default("")
-  domainTreePrompt     String        @default("")
+  name                 String        @db.LongText
+  description          String        @db.LongText
+  globalPrompt         String        @db.LongText @default("")
+  questionPrompt       String        @db.LongText @default("")
+  answerPrompt         String        @db.LongText @default("")
+  labelPrompt          String        @db.LongText @default("")
+  domainTreePrompt     String        @db.LongText @default("")
   defaultModelConfigId String?
-  test                 String        @default("")
+  test                 String        @db.LongText @default("")
   createAt             DateTime      @default(now())
   updateAt             DateTime      @updatedAt
   Questions            Questions[]
@@ -34,12 +34,12 @@ model Projects {
 model UploadFiles {
   id        String     @id @default(nanoid())
   project   Projects   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
-  fileName  String
-  fileExt   String
-  path      String
+  projectId String     @index
+  fileName  String     @db.LongText
+  fileExt   String     @db.LongText
+  path      String     @db.LongText
   size      Int
-  md5       String
+  md5       String     @db.LongText
   createAt  DateTime   @default(now())
   updateAt  DateTime   @updatedAt
   GaPairs   GaPairs[]
@@ -47,13 +47,13 @@ model UploadFiles {
 
 model Chunks {
   id        String      @id @default(nanoid())
-  name      String
+  name      String      @db.LongText
   project   Projects    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
+  projectId String      @index
   fileId    String
-  fileName  String
-  content   String
-  summary   String
+  fileName  String      @db.LongText
+  content   String      @db.LongText
+  summary   String      @db.LongText
   size      Int
   createAt  DateTime    @default(now())
   updateAt  DateTime    @updatedAt
@@ -64,9 +64,9 @@ model Chunks {
 
 model Tags {
   id        String   @id @default(nanoid())
-  label     String
+  label     String   @db.LongText
   project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
+  projectId String   @index
   parentId  String?
   parent    Tags?    @relation("Tags", fields: [parentId], references: [id])
   children  Tags[]   @relation("Tags")
@@ -75,13 +75,13 @@ model Tags {
 model Questions {
   id        String   @id @default(nanoid())
   project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
+  projectId String   @index
   chunk     Chunks   @relation(fields: [chunkId], references: [id])
-  chunkId   String
+  chunkId   String   @index
   gaPair    GaPairs? @relation(fields: [gaPairId], references: [id])
   gaPairId  String?  // Optional: links question to the GA pair that generated it
-  question  String
-  label     String
+  question  String   @db.LongText
+  label     String   @db.LongText
   answered  Boolean  @default(false)
   createAt  DateTime @default(now())
   updateAt  DateTime @updatedAt
@@ -92,15 +92,15 @@ model Questions {
 model Datasets {
   id            String   @id @default(nanoid())
   project       Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId     String
-  questionId    String
-  question      String
-  answer        String
-  chunkName     String
-  chunkContent  String
-  model         String
-  questionLabel String
-  cot           String
+  projectId     String   @index
+  questionId    String   @index
+  question      String   @db.LongText
+  answer        String   @db.LongText
+  chunkName     String   @db.LongText
+  chunkContent  String   @db.LongText
+  model         String   @db.LongText
+  questionLabel String   @db.LongText
+  cot           String   @db.LongText
   confirmed     Boolean  @default(false)
   createAt      DateTime @default(now())
   updateAt      DateTime @updatedAt
@@ -109,9 +109,9 @@ model Datasets {
 }
 
 model LlmProviders {
-  id        String      @id
-  name      String
-  apiUrl    String
+  id        String      @id @default(uuid())
+  name      String      @db.LongText
+  apiUrl    String      @db.LongText
   createAt  DateTime    @default(now())
   updateAt  DateTime    @updatedAt
   LlmModels LlmModels[]
@@ -120,9 +120,9 @@ model LlmProviders {
 model LlmModels {
   id         String       @id @default(nanoid())
   modelId    String
-  modelName  String
+  modelName  String       @db.LongText
   provider   LlmProviders @relation(fields: [providerId], references: [id])
-  providerId String
+  providerId String       @index
   createAt   DateTime     @default(now())
   updateAt   DateTime     @updatedAt
 }
@@ -130,14 +130,14 @@ model LlmModels {
 model ModelConfig {
   id           String   @id @default(nanoid())
   project      Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId    String
-  providerId   String
-  providerName String
-  endpoint     String
-  apiKey       String
+  projectId    String   @index
+  providerId   String   @index
+  providerName String   @db.LongText
+  endpoint     String   @db.LongText
+  apiKey       String   @db.LongText
   modelId      String
-  modelName    String
-  type         String
+  modelName    String   @db.LongText
+  type         String   @db.LongText
   temperature  Float
   maxTokens    Int
   topP         Float
@@ -150,39 +150,39 @@ model ModelConfig {
 model Task {
   id              String    @id @default(nanoid())
   project         Projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId       String
+  projectId       String    @index
   taskType        String    // 任务类型: text-processing, question-generation, answer-generation, data-distillation
   status          Int       // 任务状态: 0-处理中, 1-已完成, 2-失败, 3-已中断
   startTime       DateTime  @default(now())
   endTime         DateTime?
   completedCount  Int       @default(0)
   totalCount      Int       @default(0)
-  modelInfo       String    // JSON格式存储，包含使用的模型信息
+  modelInfo       String    @db.LongText // JSON格式存储，包含使用的模型信息
   language        String    @default("zh-CN")
   detail          String    @default("") // 任务详情
   note            String    @default("") // 任务备注
   createAt        DateTime  @default(now())
   updateAt        DateTime  @updatedAt
-  
+
   @@index([projectId])
 }
 
 model GaPairs {
   id          String       @id @default(nanoid())
   project     Projects     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String
+  projectId   String       @index
   uploadFile  UploadFiles  @relation(fields: [fileId], references: [id], onDelete: Cascade)
-  fileId      String
+  fileId      String       @index
   pairNumber  Int          // 1-5, representing the 5 generated pairs
   genreTitle  String       // Genre name/title
   genreDesc   String       // Genre description
-  audienceTitle String     // Audience name/title  
+  audienceTitle String     // Audience name/title
   audienceDesc String      // Audience description
   isActive    Boolean      @default(true) // Whether this pair is active for use
   questions   Questions[]  // Questions generated by this GA pair
   createAt    DateTime     @default(now())
   updateAt    DateTime     @updatedAt
-  
+
   @@index([projectId])
   @@index([fileId])
   @@unique([fileId, pairNumber])
