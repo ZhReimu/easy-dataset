@@ -73,4 +73,4 @@ COPY --from=builder /app/prisma ./prisma
 ENV NODE_ENV=production
 
 EXPOSE 1717
-CMD ["pnpm", "start"]
+CMD ["pnpm", "start-docker"]
